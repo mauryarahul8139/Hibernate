@@ -1,0 +1,528 @@
+Adding dependency to project in Pom.xml
+<project xmlns="http://maven.apache.org/POM/4.0.0" xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xsi:schemaLocation="http://maven.apache.org/POM/4.0.0 http://maven.apache.org/xsd/maven-4.0.0.xsd">
+  <modelVersion>4.0.0</modelVersion>
+  <groupId>test.persistency</groupId>
+  <artifactId>hobernate-persistency</artifactId>
+  <version>0.0.1-SNAPSHOT</version>
+<dependencies>
+<dependency>
+      <groupId>mysql</groupId>
+      <artifactId>mysql-connector-java</artifactId>
+      <version>6.0.5</version>
+    </dependency>
+    <!-- Hibernate 5.2.6 Final -->
+    <dependency>
+      <groupId>org.hibernate</groupId>
+      <artifactId>hibernate-core</artifactId>
+      <version>5.2.6.Final</version>
+    </dependency>
+<dependency>
+<groupId>org.hibernate</groupId>
+<artifactId>hibernate-core</artifactId>
+<version>4.3.11.Final</version>
+</dependency>
+
+<dependency>
+<groupId>mysql</groupId>
+<artifactId>mysql-connector-java</artifactId>
+<version>5.1.38</version>
+</dependency>
+
+<dependency>
+<groupId>org.javassist</groupId>
+<artifactId>javassist</artifactId>
+<version>3.18.0-GA</version>
+</dependency>
+ </dependencies>
+</project>
+
+
+
+Customer.java Persistence Class
+
+package com.test.entity;
+
+import java.util.Date;
+import javax.persistence.Column;
+import javax.persistence.Entity;
+import javax.persistence.Id;
+import javax.persistence.Table;
+
+@Entity
+@Table(name="CUSTOMERS")
+public class Customer {
+
+@Id
+@Column(name="CUSTID")
+private int id;
+@Column(name="CFIRSTNAME")
+    private String firstName;
+@Column(name="CLASTNAME")
+    private String lastName;
+        @Column(name="CEMAIL")
+    private String email;
+		
+    public void setId(int id) {
+this.id = id;
+}
+    public int getId() {
+return id;
+}
+ public void setFirstName(String firstName) {
+this.firstName = firstName;
+}
+public String getFirstName() {
+return firstName;
+}
+public void setLastName(String lastName) {
+this.lastName = lastName;
+}
+public String getLastName() {
+return lastName;
+}
+public void setEmail(String email)
+{
+this.email=email;
+}
+public String getEmail() {
+return email;
+}
+}
+
+
+
+
+HbUtil.java file for configuring database connection
+package com.test;
+
+import java.util.HashMap;
+import java.util.Map;
+import org.hibernate.SessionFactory;
+import org.hibernate.boot.Metadata;
+import org.hibernate.boot.MetadataSources;
+import org.hibernate.boot.registry.StandardServiceRegistry;
+import org.hibernate.boot.registry.StandardServiceRegistryBuilder;
+import com.test.entity.Customer;
+public class HbUtil {
+ private static StandardServiceRegistry registry;
+private static SessionFactory sessionFactory;
+  public static SessionFactory getSessionFactory() {
+    if (sessionFactory == null) {
+      try {
+       StandardServiceRegistryBuilder registryBuilder = 
+            new StandardServiceRegistryBuilder();
+        Map<String, String> settings = new HashMap<>();
+settings.put("hibernate.connection.driver_class", "com.mysql.cj.jdbc.Driver");
+ settings.put("hibernate.connection.url", "jdbc:mysql://localhost:3306/hibernatedb?useSSL=false");
+  settings.put("hibernate.connection.username", "root");
+  settings.put("hibernate.connection.password", "root");
+   settings.put("hibernate.show_sql", "true");
+  settings.put("hibernate.hbm2ddl.auto", "update");
+	     settings.put("hibernate.dialect","org.hibernate.dialect.MySQL5Dialect");
+       registryBuilder.applySettings(settings);
+	        registry = registryBuilder.build();
+
+    MetadataSources sources = new MetadataSources(registry)
+           .addAnnotatedClass(Customer.class);
+        Metadata metadata = sources.getMetadataBuilder().build();
+
+        sessionFactory = metadata.getSessionFactoryBuilder().build();
+	      } catch (Exception e) {
+        System.out.println("SessionFactory creation failed");
+	        if (registry != null) {
+	          StandardServiceRegistryBuilder.destroy(registry);
+	        }
+	      }
+	    }
+	    return sessionFactory;
+	  }
+
+	  public static void shutdown() {
+	    if (registry != null) {
+	      StandardServiceRegistryBuilder.destroy(registry);
+	    }
+	  }
+	}
+
+
+
+
+CustomerSaveDemo.java file for starting the transaction through persistence class customer
+
+package com.test;
+import java.util.Calendar;
+import org.hibernate.Session;
+import org.hibernate.Transaction;
+import com.test.entity.Customer;
+public class CustomerSaveDemo {
+	public static void main(String[] args) {
+		// TODO Auto-generated method stub
+		Session session = null;
+	    Transaction transaction = null;
+	    try {
+	      session = HbUtil.getSessionFactory().openSession();
+	      transaction=session.getTransaction();
+	        	  if(!transaction.isActive()) 
+	      transaction.begin();
+	      Customer customer = new Customer();
+	      customer.setId(17);
+	      customer.setFirstName("Nisha");
+	      customer.setLastName("Rastogi");
+	      customer.setEmail("rNisha@gmail.com");
+	      session.save(customer);	
+	
+               transaction.commit();
+	    } catch (Exception e) {
+	      if (transaction != null) {
+	        transaction.rollback();
+	      }
+	      e.printStackTrace();
+	    } finally {
+	      if (session != null) {
+	        session.close();
+	      }
+	    }
+
+	    HbUtil.shutdown();
+	  }
+	}
+
+
+
+One TO One Mapping  Example
+
+Pom.xml
+<project xmlns="http://maven.apache.org/POM/4.0.0" xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xsi:schemaLocation="http://maven.apache.org/POM/4.0.0 http://maven.apache.org/xsd/maven-4.0.0.xsd">
+  <modelVersion>4.0.0</modelVersion>
+  <groupId>OnetoManyMap</groupId>
+  <artifactId>hb-onetomany</artifactId>
+  <version>0.0.1-SNAPSHOT</version>
+<dependencies>
+<dependency>
+<groupId>org.hibernate</groupId>
+<artifactId>hibernate-core</artifactId>
+<version>4.3.11.Final</version>
+</dependency>
+<dependency>
+<groupId>mysql</groupId>
+<artifactId>mysql-connector-java</artifactId>
+<version>5.1.38</version>
+</dependency>
+<dependency>
+<groupId>org.javassist</groupId>
+<artifactId>javassist</artifactId>
+<version>3.18.0-GA</version>
+</dependency>
+</dependencies>
+</project>
+
+
+
+
+
+
+Stock.java file create stock table in database with the entities
+
+package com.test.model;
+import javax.persistence.CascadeType;
+import javax.persistence.Column;
+import javax.persistence.Entity;
+import javax.persistence.FetchType;
+import javax.persistence.GeneratedValue;
+import static javax.persistence.GenerationType.IDENTITY;
+import javax.persistence.Id;
+import javax.persistence.OneToOne;
+import javax.persistence.Table;
+import javax.persistence.UniqueConstraint;
+
+@Entity
+@Table(name = "stock",  uniqueConstraints = {
+@UniqueConstraint(columnNames = "STOCK_NAME"),
+@UniqueConstraint(columnNames = "STOCK_CODE") })
+public class Stock implements java.io.Serializable {
+
+private Integer stockId;
+private String stockCode;
+private String stockName;
+private StockDetail stockDetail;
+
+public public Stock(String stockCode, String stockName) {
+this.stockCode = stockCode;
+this.stockName = stockName;
+}
+
+public Stock(String stockCode, String stockName, StockDetail stockDetail) {
+this.stockCode = stockCode;
+this.stockName = stockName;
+this.stockDetail = stockDetail;
+}
+
+@Id
+@GeneratedValue(strategy = IDENTITY)
+@Column(name = "STOCK_ID", unique = true, nullable = false)
+public Integer getStockId() {
+return this.stockId;
+}
+
+public void setStockId(Integer stockId) {
+this.stockId = stockId;
+}
+@Column(name = "STOCK_CODE", unique = true, nullable = false, length = 10)
+public String getStockCode() {
+return this.stockCode;
+}
+
+public void setStockCode(String stockCode) {
+this.stockCode = stockCode;
+}
+
+@Column(name = "STOCK_NAME", unique = true, nullable = false, length = 20)
+public String getStockName() {
+return this.stockName;
+}
+
+public void setStockName(String stockName) {
+this.stockName = stockName;
+}
+
+@OneToOne(fetch = FetchType.LAZY, mappedBy = "stock", cascade = CascadeType.ALL)
+public StockDetail getStockDetail() {
+return this.stockDetail;
+}
+
+public void setStockDetail(StockDetail stockDetail) {
+this.stockDetail = stockDetail;
+}
+}
+
+
+
+
+
+
+Stock_detail class for making table entity stock_detail with mapping columns 
+
+package com.test.model;
+
+import java.util.Date;
+import javax.persistence.Column;
+import javax.persistence.Entity;
+import javax.persistence.FetchType;
+import javax.persistence.GeneratedValue;
+import javax.persistence.Id;
+import javax.persistence.OneToOne;
+import javax.persistence.PrimaryKeyJoinColumn;
+import javax.persistence.Table;
+import javax.persistence.Temporal;
+import javax.persistence.TemporalType;
+import org.hibernate.annotations.GenericGenerator;
+import org.hibernate.annotations.Parameter;
+
+@Entity
+@Table(name = "stock_detail")
+public class StockDetail implements java.io.Serializable {
+
+private Integer stockId;
+private Stock stock;
+private String compName;
+private String compDesc;
+private String remark;
+private Date listedDate;
+public StockDetail() {
+}
+
+public StockDetail(Stock stock, String compName, String compDesc,
+String remark, Date listedDate) {
+this.stock = stock;
+this.compName = compName;
+this.compDesc = compDesc;
+this.remark = remark;
+this.listedDate = listedDate;
+}
+
+@GenericGenerator(name = "generator", strategy = "foreign", 
+parameters = @Parameter(name = "property", value = "stock"))
+@Id
+@GeneratedValue(generator = "generator")
+@Column(name = "STOCK_ID", unique = true, nullable = false)
+public Integer getStockId() {
+return this.stockId;				One to one mapping
+}
+
+public void setStockId(Integer stockId) {
+this.stockId = stockId;
+}
+
+@OneToOne(fetch = FetchType.LAZY)
+@PrimaryKeyJoinColumn
+public Stock getStock() {
+return this.stock;
+}
+public void setStock(Stock stock) {
+this.stock = stock;
+}
+
+@Column(name = "COMP_NAME", nullable = false, length = 100)
+public String getCompName() {
+return this.compName;
+}
+
+public void setCompName(String compName) {
+this.compName = compName;
+}
+
+@Column(name = "COMP_DESC", nullable = false)
+public String getCompDesc() {
+return this.compDesc;
+}
+
+public void setCompDesc(String compDesc) {
+this.compDesc = compDesc;
+}
+
+@Column(name = "REMARK", nullable = false)
+public String getRemark() {
+return this.remark;
+}
+public void setRemark(String remark) {
+this.remark = remark;
+}
+
+@Temporal(TemporalType.DATE)
+@Column(name = "LISTED_DATE", nullable = false, length = 10)
+public Date getListedDate() {
+return this.listedDate;
+}
+
+public void setListedDate(Date listedDate) {
+this.listedDate = listedDate;
+}
+
+}
+
+
+
+
+
+package com.test.main;
+import java.util.Date;
+
+import org.hibernate.Session;
+import org.hibernate.SessionFactory;
+import org.hibernate.boot.registry.StandardServiceRegistryBuilder;
+import org.hibernate.cfg.Configuration;
+
+
+import com.test.model.Stock;
+import com.test.model.StockDetail;
+
+public class MainMapping {
+public static SessionFactory getSessionFactory() {
+Configuration configuration = new Configuration().configure();
+StandardServiceRegistryBuilder builder = new StandardServiceRegistryBuilder()
+.applySettings(configuration.getProperties());
+SessionFactory sessionFactory = configuration
+.buildSessionFactory(builder.build());
+return sessionFactory;
+}
+public static void main(String[] args) {
+System.out.println("Hibernate one to one (Annotation)");
+Session session = getSessionFactory().openSession();
+session.beginTransaction();
+
+Stock stock = new Stock();
+
+stock.setStockCode("10001");
+stock.setStockName("Agent");
+
+StockDetail stockDetail = new StockDetail();
+stockDetail.setCompName("Reynold");
+stockDetail.setCompDesc("Iso");
+stockDetail.setRemark("Good");
+stockDetail.setListedDate(new Date());
+
+stock.setStockDetail(stockDetail);
+stockDetail.setStock(stock);
+
+session.save(stock);
+session.getTransaction().commit();
+System.out.println("Inserting values into tables stock,stock details....");
+
+System.out.println("Done");
+}
+}
+
+
+
+
+
+
+
+Hibernate.cfg.xml database connection configurations and mapping class mentioned in xml
+
+<?xml version='1.0' encoding='UTF-8'?>
+<!DOCTYPE hibernate-configuration PUBLIC
+        "-//Hibernate/Hibernate Configuration DTD 3.0//EN"
+        "http://www.hibernate.org/dtd/hibernate-configuration-3.0.dtd">
+ <hibernate-configuration>
+   <session-factory>
+   <property name="hibernate.dialect">org.hibernate.dialect.MySQLDialect</property>
+   <property name="hibernate.connection.driver_class">com.mysql.jdbc.Driver</property>
+   <property name="hibernate.connection.url">jdbc:mysql://localhost/test</property>
+   <property name="hibernate.connection.username">root</property>
+   <property name="hibernate.connection.password">root</property>
+   <property name="hibernate.hbm2ddl.auto">update</property>
+   <property name="show_sql">false</property>
+   <property name="hibernate.current_session_context_class">org.hibernate.context.internal.ThreadLocalSessionContext</property>
+   
+   <mapping class="com.test.model.Stock"/>
+    <mapping class="com.test.model.StockDetail"/>	   
+</session-factory>
+</hibernate-configuration>
+
+
+
+
+
+Open mysql workbench and type below script in query tab for creating tables 
+
+
+
+CREATE TABLE  `hibernatedb`.`stock_daily_record` (
+  `RECORD_ID` int(10) unsigned NOT NULL AUTO_INCREMENT,
+  `PRICE_OPEN` float(6,2) DEFAULT NULL,
+  `PRICE_CLOSE` float(6,2) DEFAULT NULL,
+  `PRICE_CHANGE` float(6,2) DEFAULT NULL,
+  `VOLUME` bigint(20) unsigned DEFAULT NULL,
+  `DATE` date NOT NULL,
+  `STOCK_ID` int(10) unsigned NOT NULL,
+  PRIMARY KEY (`RECORD_ID`) USING BTREE,
+  UNIQUE KEY `UNI_STOCK_DAILY_DATE` (`DATE`),
+  KEY `FK_STOCK_TRANSACTION_STOCK_ID` (`STOCK_ID`),
+  CONSTRAINT `FK_STOCK_TRANSACTION_STOCK_ID` FOREIGN KEY (`STOCK_ID`) 
+  REFERENCES `stock` (`STOCK_ID`) ON DELETE CASCADE ON UPDATE CASCADE
+) ENGINE=InnoDB AUTO_INCREMENT=36 DEFAULT CHARSET=utf8;
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
